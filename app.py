@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import streamlit as st
 from src.analyzer import analyze_code
 from src.ai_engine import get_ai_review
@@ -184,4 +184,4 @@ if st.button("Analyze Code"):
                 st.info("No functions or classes found to analyze.")
     else:
         st.warning("Please paste some code first.")
->>>>>>> 064a14efc2085faadbe2dcbbc05c17d35e30c245
+
