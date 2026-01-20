@@ -1,7 +1,7 @@
 
 from src.analyzer import analyze_code
 from src.ai_engine import get_ai_review
-from st_diff_viewer import diff_viewer
+# from st_diff_viewer import diff_viewer
 import streamlit as st
 
 st.set_page_config(
@@ -115,9 +115,9 @@ if st.session_state.ai_feedback:
                 st.markdown("### Algorithm Analysis")
                 st.markdown(complexity_content)
                 
-            with tab4:
-                st.subheader("Comparison: Original vs. Fixed")
-                diff_viewer(code_input, fixed_code, lang=language.lower(), key="main_diff_viewer")
+            # with tab4:
+            #     st.subheader("Comparison: Original vs. Fixed")
+            #     diff_viewer(code_input, fixed_code, lang=language.lower(), key="main_diff_viewer")
         
         except Exception as e:
             st.error("Error parsing AI response. Showing raw feedback below.")
