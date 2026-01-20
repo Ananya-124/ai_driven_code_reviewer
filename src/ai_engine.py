@@ -32,7 +32,7 @@ system_instruction=(
         
         
         # Generate the response
-        response = model.generate_content(f"Please review this code:\n\n{code_content}")
+        response = model.generate_content(f"Please review this code:\n\n{code_content}",stream=True)
         
         return response.text
         
