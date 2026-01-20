@@ -66,22 +66,36 @@ st.sidebar.divider()
 st.sidebar.info("Select your language and hit Analyze to start the audit.")
 
 # --- Action Button ---
-if st.button("Analyze Code"):
-    if code_input.strip():
-        # Static Analysis for Python
-        if language == "Python":
-            report = analyze_code(code_input)
-            if not report["syntax_ok"]:
-                st.error(f"⚠️ Python Syntax Error: {report['error']}")
+# if st.button("Analyze Code"):
+#     if code_input.strip():
+#         # Static Analysis for Python
+#         if language == "Python":
+#             report = analyze_code(code_input)
+#             if not report["syntax_ok"]:
+#                 st.error(f"⚠️ Python Syntax Error: {report['error']}")
                 
            
         
-        # AI Analysis
-        with st.spinner(f"🤖 Analysing Your {language} code..."):
-            # st.session_state.ai_feedback = get_ai_review(code_input) 
-            st.write_stream(get_ai_review(code_input))
+#         # AI Analysis
+#         with st.spinner(f"🤖 Analysing Your {language} code..."):
+#             # st.session_state.ai_feedback = get_ai_review(code_input) 
+#             st.write_stream(get_ai_review(code_input))
+#     else:
+#         st.warning("Please enter some code first.")
+    if st.button("Analyze Code"):
+    st.toast("Button Clicked!") # Debug 1
+    if code_input.strip():
+        st.toast("Starting AI Engine...") # Debug 2
+        with st.spinner("🤖 Analysing..."):
+            try:
+                result = get_ai_review(code_input)
+                st.session_state.ai_feedback = result
+                st.toast("AI Response Received!") # Debug 3
+            except Exception as e:
+                st.error(f"AI Engine Error: {e}")
+                st.toast("AI Engine Failed!")
     else:
-        st.warning("Please enter some code first.")
+        st.warning("Please enter code.")
 
 # --- DISPLAY RESULTS ---
 if st.session_state.ai_feedback:
