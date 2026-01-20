@@ -79,7 +79,8 @@ if st.button("Analyze Code"):
         
         # AI Analysis
         with st.spinner(f"🤖 Analysing Your {language} code..."):
-            st.session_state.ai_feedback = get_ai_review(code_input) 
+            # st.session_state.ai_feedback = get_ai_review(code_input) 
+            st.write_stream(get_ai_review(code_input))
     else:
         st.warning("Please enter some code first.")
 
