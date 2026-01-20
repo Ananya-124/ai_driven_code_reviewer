@@ -146,4 +146,4 @@ with tab3:
 
 # Footer
 st.markdown("---")
-st.markdown("Built with ❤️ using Streamlit and Claude AI")
+# st.markdown("Built with ❤️ using Streamlit and Claude AI")
