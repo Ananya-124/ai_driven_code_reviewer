@@ -74,8 +74,7 @@ if st.button("Analyze Code"):
             if not report["syntax_ok"]:
                 st.error(f"⚠️ Python Syntax Error: {report['error']}")
                 st.stop()
-            else:
-                st.success("✅ Python Static Analysis Passed!")
+           
         
         # AI Analysis
         with st.spinner(f"🤖 Analysing Your {language} code..."):
