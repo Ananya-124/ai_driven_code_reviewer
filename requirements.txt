@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 streamlit
 radon
 python-dotenv
@@ -13,4 +13,4 @@ langchain
 streamlit
 radon
 python-dotenv
->>>>>>> 064a14efc2085faadbe2dcbbc05c17d35e30c245
+
