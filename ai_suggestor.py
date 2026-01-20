@@ -1,9 +1,10 @@
 import re
+import ast
 from typing import Dict, List, Any
 
 class AISuggestor:
     """
-    Provides AI-powered suggestions for code improvement
+    Provides intelligent rule-based suggestions for code improvement
     """
     
     def __init__(self):
@@ -11,7 +12,7 @@ class AISuggestor:
     
     def get_suggestions(self, code: str, errors: Dict[str, List]) -> Dict[str, Any]:
         """
-        Generate AI-powered suggestions based on code and detected errors
+        Generate intelligent suggestions based on code and detected errors
         
         Args:
             code: Python code string
@@ -39,50 +40,152 @@ class AISuggestor:
             errors: Dictionary of detected errors
             
         Returns:
-            Analysis string
+            Analysis string in markdown format
         """
-        lines = code.split('\n')
+        lines = [line for line in code.split('\n') if line.strip()]
         num_lines = len(lines)
         num_functions = code.count('def ')
         num_classes = code.count('class ')
+        num_comments = sum(1 for line in code.split('\n') if line.strip().startswith('#'))
         
         analysis_parts = []
         
-        # Basic stats
-        analysis_parts.append(f"**Code Statistics:**")
-        analysis_parts.append(f"- Total Lines: {num_lines}")
-        analysis_parts.append(f"- Functions: {num_functions}")
-        analysis_parts.append(f"- Classes: {num_classes}")
+        # Header
+        analysis_parts.append("## 📊 Code Analysis Report\n")
+        
+        # Basic statistics
+        analysis_parts.append("### Code Statistics")
+        analysis_parts.append(f"- **Total Lines of Code:** {num_lines}")
+        analysis_parts.append(f"- **Functions Defined:** {num_functions}")
+        analysis_parts.append(f"- **Classes Defined:** {num_classes}")
+        analysis_parts.append(f"- **Comments:** {num_comments}")
         analysis_parts.append("")
         
-        # Error summary
+        # Issue summary
         total_issues = len(errors.get('unused_vars', [])) + len(errors.get('unused_imports', []))
         
+        analysis_parts.append("### Issues Detected")
         if total_issues > 0:
-            analysis_parts.append(f"**Issues Found:** {total_issues}")
-            analysis_parts.append(f"- Unused imports: {len(errors.get('unused_imports', []))}")
-            analysis_parts.append(f"- Unused variables: {len(errors.get('unused_vars', []))}")
+            analysis_parts.append(f"- **Total Issues Found:** {total_issues}")
+            analysis_parts.append(f"  - Unused Imports: {len(errors.get('unused_imports', []))}")
+            analysis_parts.append(f"  - Unused Variables: {len(errors.get('unused_vars', []))}")
         else:
-            analysis_parts.append("**Status:** ✅ No major issues detected!")
+            analysis_parts.append("✅ **No issues detected!** Your code is clean.")
         
         analysis_parts.append("")
         
         # Code quality assessment
         quality_score = self._calculate_quality_score(code, errors)
-        analysis_parts.append(f"**Code Quality Score:** {quality_score}/100")
+        analysis_parts.append("### Code Quality Assessment")
+        analysis_parts.append(f"**Overall Score:** {quality_score}/100")
+        analysis_parts.append("")
         
-        if quality_score >= 80:
-            analysis_parts.append("Your code quality is excellent!")
+        # Quality breakdown
+        if quality_score >= 90:
+            analysis_parts.append("🌟 **Excellent!** Your code follows best practices.")
+        elif quality_score >= 75:
+            analysis_parts.append("👍 **Good!** Your code quality is solid with minor areas for improvement.")
         elif quality_score >= 60:
-            analysis_parts.append("Your code quality is good, with room for minor improvements.")
+            analysis_parts.append("⚠️ **Fair.** Consider implementing the suggested improvements.")
         else:
-            analysis_parts.append("Consider implementing the suggested improvements below.")
+            analysis_parts.append("⚠️ **Needs Improvement.** Please review the suggestions below.")
+        
+        analysis_parts.append("")
+        
+        # Additional insights
+        analysis_parts.append("### Key Insights")
+        insights = self._generate_insights(code, errors, num_lines, num_functions)
+        for insight in insights:
+            analysis_parts.append(f"- {insight}")
         
         return '\n'.join(analysis_parts)
     
+    def _generate_insights(self, code: str, errors: Dict[str, List], 
+                          num_lines: int, num_functions: int) -> List[str]:
+        """
+        Generate insights about the code
+        
+        Args:
+            code: Python code string
+            errors: Dictionary of detected errors
+            num_lines: Number of lines in code
+            num_functions: Number of functions
+            
+        Returns:
+            List of insight strings
+        """
+        insights = []
+        
+        # Documentation insights
+        has_docstrings = '"""' in code or "'''" in code
+        if has_docstrings:
+            insights.append("✅ Code includes docstrings for documentation")
+        elif num_functions > 0:
+            insights.append("📝 Consider adding docstrings to improve documentation")
+        
+        # Type hints
+        has_type_hints = '->' in code or ': str' in code or ': int' in code or ': List' in code
+        if has_type_hints:
+            insights.append("✅ Type hints detected - great for code clarity!")
+        elif num_functions > 1:
+            insights.append("💡 Type hints could improve code maintainability")
+        
+        # Error handling
+        has_try_except = 'try:' in code and 'except' in code
+        if has_try_except:
+            insights.append("✅ Error handling implemented")
+        elif num_lines > 20:
+            insights.append("🛡️ Consider adding error handling for robustness")
+        
+        # Code organization
+        if num_functions > 10:
+            insights.append("📦 Large number of functions - consider organizing into classes or modules")
+        
+        # Line length
+        long_lines = [line for line in code.split('\n') if len(line) > 100]
+        if len(long_lines) > 3:
+            insights.append(f"📏 {len(long_lines)} lines exceed 100 characters - consider breaking them up")
+        
+        # Complexity
+        complexity = self._estimate_complexity(code)
+        if complexity > 20:
+            insights.append("🔄 High complexity detected - consider refactoring into smaller functions")
+        
+        return insights
+    
+    def _estimate_complexity(self, code: str) -> int:
+        """
+        Estimate code complexity using simple heuristics
+        
+        Args:
+            code: Python code string
+            
+        Returns:
+            Complexity score
+        """
+        try:
+            tree = ast.parse(code)
+            complexity = 0
+            
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.If, ast.For, ast.While)):
+                    complexity += 1
+                elif isinstance(node, ast.FunctionDef):
+                    complexity += 2
+                elif isinstance(node, ast.ClassDef):
+                    complexity += 3
+                elif isinstance(node, (ast.Try, ast.ExceptHandler)):
+                    complexity += 1
+                elif isinstance(node, ast.Lambda):
+                    complexity += 1
+            
+            return complexity
+        except:
+            return 0
+    
     def _calculate_quality_score(self, code: str, errors: Dict[str, List]) -> int:
         """
-        Calculate a quality score for the code
+        Calculate a comprehensive quality score for the code
         
         Args:
             code: Python code string
@@ -93,22 +196,36 @@ class AISuggestor:
         """
         score = 100
         
-        # Deduct points for errors
+        # Deduct for unused imports (5 points each)
         score -= len(errors.get('unused_imports', [])) * 5
+        
+        # Deduct for unused variables (5 points each)
         score -= len(errors.get('unused_vars', [])) * 5
         
-        # Deduct points for lack of docstrings
-        if 'def ' in code and '"""' not in code and "'''" not in code:
+        # Deduct for lack of docstrings
+        num_functions = code.count('def ')
+        has_docstrings = '"""' in code or "'''" in code
+        if num_functions > 0 and not has_docstrings:
             score -= 10
         
-        # Deduct points for very long lines
+        # Deduct for long lines
         lines = code.split('\n')
         long_lines = sum(1 for line in lines if len(line) > 100)
         score -= min(long_lines * 2, 15)
         
+        # Deduct for lack of error handling
+        has_try_except = 'try:' in code and 'except' in code
+        if len(lines) > 20 and not has_try_except:
+            score -= 5
+        
         # Bonus for type hints
         if '->' in code or ': str' in code or ': int' in code:
-            score += 5
+            score = min(100, score + 5)
+        
+        # Bonus for comments
+        num_comments = sum(1 for line in lines if line.strip().startswith('#'))
+        if num_comments >= len(lines) * 0.1:  # At least 10% comments
+            score = min(100, score + 5)
         
         return max(0, min(100, score))
     
@@ -127,84 +244,153 @@ class AISuggestor:
         
         # Suggest removing unused imports
         if errors.get('unused_imports'):
-            imports_list = ', '.join([imp['name'] for imp in errors['unused_imports'][:3]])
+            imports_list = ', '.join([f"`{imp['name']}`" for imp in errors['unused_imports'][:5]])
+            more = ''
+            if len(errors['unused_imports']) > 5:
+                more = f" and {len(errors['unused_imports']) - 5} more"
+            
             improvements.append({
-                'title': 'Remove Unused Imports',
-                'description': f"Remove unused imports: {imports_list}",
-                'priority': 'high',
+                'title': '🧹 Remove Unused Imports',
+                'description': f"The following imports are not being used in your code: {imports_list}{more}. Removing them will make your code cleaner and reduce dependencies.",
+                'priority': 'High',
                 'code': '# Remove these import statements:\n' + '\n'.join(
-                    [f"# Line {imp['line']}: {imp['name']}" for imp in errors['unused_imports']]
+                    [f"# Line {imp['line']}: import {imp['name'].split('.')[-1]}" 
+                     for imp in errors['unused_imports'][:5]]
                 )
             })
         
-        # Suggest removing unused variables
+        # Suggest handling unused variables
         if errors.get('unused_vars'):
-            vars_list = ', '.join([var['name'] for var in errors['unused_vars'][:3]])
+            vars_list = ', '.join([f"`{var['name']}`" for var in errors['unused_vars'][:5]])
+            more = ''
+            if len(errors['unused_vars']) > 5:
+                more = f" and {len(errors['unused_vars']) - 5} more"
+            
             improvements.append({
-                'title': 'Remove or Use Unused Variables',
-                'description': f"Variables {vars_list} are assigned but never used. Consider removing them or using them in your logic.",
-                'priority': 'medium'
+                'title': '🔧 Handle Unused Variables',
+                'description': f"Variables {vars_list}{more} are assigned but never used. Either use them in your logic or remove them. If they're intentionally unused (like in unpacking), prefix them with an underscore.",
+                'priority': 'Medium',
+                'code': '''# For intentionally unused variables:
+_, value = some_tuple  # Use underscore for unused values
+
+# Or simply remove if not needed:
+# unused_var = 10  # Remove this line'''
             })
         
         # Suggest adding docstrings
-        if 'def ' in code:
-            has_docstrings = '"""' in code or "'''" in code
-            if not has_docstrings:
-                improvements.append({
-                    'title': 'Add Docstrings',
-                    'description': 'Add docstrings to your functions to improve code documentation.',
-                    'priority': 'medium',
-                    'code': '''def example_function(param1, param2):
+        num_functions = code.count('def ')
+        has_docstrings = '"""' in code or "'''" in code
+        if num_functions > 0 and not has_docstrings:
+            improvements.append({
+                'title': '📝 Add Docstrings',
+                'description': 'Your code has functions but no docstrings. Adding docstrings helps other developers (and future you) understand what each function does.',
+                'priority': 'Medium',
+                'code': '''def calculate_sum(a: int, b: int) -> int:
     """
-    Brief description of what the function does.
+    Calculate the sum of two numbers.
     
     Args:
-        param1: Description of param1
-        param2: Description of param2
+        a: First number
+        b: Second number
         
     Returns:
-        Description of return value
+        The sum of a and b
     """
-    # function body
-    pass'''
-                })
+    return a + b'''
+            })
         
         # Suggest type hints
-        if 'def ' in code and '->' not in code:
+        if num_functions > 0 and '->' not in code:
             improvements.append({
-                'title': 'Add Type Hints',
-                'description': 'Consider adding type hints to improve code clarity and catch type-related bugs.',
-                'priority': 'low',
-                'code': '''def example(name: str, age: int) -> str:
-    return f"{name} is {age} years old"'''
+                'title': '🎯 Add Type Hints',
+                'description': 'Type hints make your code more readable and help catch type-related bugs early. Modern Python encourages their use.',
+                'priority': 'Low',
+                'code': '''# Without type hints:
+def greet(name):
+    return f"Hello, {name}"
+
+# With type hints:
+def greet(name: str) -> str:
+    return f"Hello, {name}"'''
             })
         
         # Check for long functions
         lines = code.split('\n')
-        in_function = False
-        function_length = 0
-        for line in lines:
-            if line.strip().startswith('def '):
-                in_function = True
-                function_length = 0
-            elif in_function:
-                if line.strip() and not line.strip().startswith('#'):
-                    function_length += 1
-                if line.strip().startswith('def ') or line.strip().startswith('class '):
-                    in_function = False
+        function_lengths = self._get_function_lengths(code)
+        long_functions = [f for f in function_lengths if function_lengths[f] > 50]
         
-        if function_length > 50:
+        if long_functions:
             improvements.append({
-                'title': 'Consider Breaking Down Large Functions',
-                'description': 'Some functions are quite long. Consider breaking them into smaller, more focused functions.',
-                'priority': 'medium'
+                'title': '✂️ Break Down Large Functions',
+                'description': f"Functions {', '.join([f'`{f}`' for f in long_functions[:3]])} are quite long. Consider breaking them into smaller, focused functions following the Single Responsibility Principle.",
+                'priority': 'Medium',
+                'code': '''# Instead of one large function:
+def process_data(data):
+    # 50+ lines of code...
+    pass
+
+# Break into smaller functions:
+def validate_data(data):
+    # Validation logic
+    pass
+
+def transform_data(data):
+    # Transformation logic
+    pass
+
+def save_data(data):
+    # Saving logic
+    pass'''
+            })
+        
+        # Check for error handling
+        has_try_except = 'try:' in code and 'except' in code
+        if len(lines) > 20 and not has_try_except:
+            improvements.append({
+                'title': '🛡️ Add Error Handling',
+                'description': 'Your code lacks error handling. Adding try-except blocks will make it more robust and prevent unexpected crashes.',
+                'priority': 'Medium',
+                'code': '''try:
+    result = risky_operation()
+except ValueError as e:
+    print(f"Value error occurred: {e}")
+    result = default_value
+except Exception as e:
+    print(f"Unexpected error: {e}")
+    raise'''
             })
         
         return improvements
     
+    def _get_function_lengths(self, code: str) -> Dict[str, int]:
+        """
+        Calculate the length of each function in the code
+        
+        Args:
+            code: Python code string
+            
+        Returns:
+            Dictionary mapping function names to their lengths
+        """
+        function_lengths = {}
+        
+        try:
+            tree = ast.parse(code)
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    # Count non-empty, non-comment lines in function
+                    func_start = node.lineno
+                    func_end = node.end_lineno if hasattr(node, 'end_lineno') else func_start + 10
+                    length = func_end - func_start
+                    function_lengths[node.name] = length
+        except:
+            pass
+        
+        return function_lengths
+    
     def _refactor_code(self, code: str, errors: Dict[str, List]) -> str:
         """
-        Generate refactored version of the code
+        Generate refactored version of the code with improvements applied
         
         Args:
             code: Python code string
@@ -214,17 +400,20 @@ class AISuggestor:
             Refactored code string
         """
         refactored = code
-        
-        # Remove unused imports
         lines = refactored.split('\n')
+        
+        # Get line numbers of unused imports
         unused_import_lines = set(imp['line'] - 1 for imp in errors.get('unused_imports', []))
         
+        # Remove or comment out unused imports
         cleaned_lines = []
         for i, line in enumerate(lines):
-            if i not in unused_import_lines:
-                cleaned_lines.append(line)
+            if i in unused_import_lines:
+                # Comment out instead of removing to show what was changed
+                if line.strip():
+                    cleaned_lines.append(f"# REMOVED (unused): {line.strip()}")
             else:
-                cleaned_lines.append(f"# REMOVED: {line.strip()} (unused import)")
+                cleaned_lines.append(line)
         
         refactored = '\n'.join(cleaned_lines)
         
@@ -232,12 +421,25 @@ class AISuggestor:
         for var in errors.get('unused_vars', []):
             var_name = var['name']
             # Use word boundaries to avoid partial matches
-            pattern = rf'\b{re.escape(var_name)}\s*='
-            refactored = re.sub(
-                pattern,
-                f'# UNUSED: {var_name} =',
-                refactored,
-                count=1
-            )
+            pattern = rf'(\s*)({re.escape(var_name)}\s*=)'
+            replacement = r'\1# UNUSED: \2'
+            refactored = re.sub(pattern, replacement, refactored, count=1)
+        
+        # Add a header comment explaining the refactoring
+        if errors.get('unused_imports') or errors.get('unused_vars'):
+            header = [
+                "# ====================================",
+                "# REFACTORED CODE",
+                "# Changes made:",
+            ]
+            
+            if errors.get('unused_imports'):
+                header.append(f"# - Removed {len(errors['unused_imports'])} unused import(s)")
+            
+            if errors.get('unused_vars'):
+                header.append(f"# - Marked {len(errors['unused_vars'])} unused variable(s)")
+            
+            header.append("# ====================================\n")
+            refactored = '\n'.join(header) + '\n' + refactored
         
         return refactored
