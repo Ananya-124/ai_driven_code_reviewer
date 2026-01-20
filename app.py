@@ -82,7 +82,7 @@ st.sidebar.info("Select your language and hit Analyze to start the audit.")
 #             st.write_stream(get_ai_review(code_input))
 #     else:
 #         st.warning("Please enter some code first.")
-    if st.button("Analyze Code"):
+if st.button("Analyze Code"):
     st.toast("Button Clicked!") # Debug 1
     if code_input.strip():
         st.toast("Starting AI Engine...") # Debug 2
