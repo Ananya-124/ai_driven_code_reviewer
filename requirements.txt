@@ -9,8 +9,5 @@ langchain-huggingface
 langchain-community
 langchain-core
 langchain
-=======
-streamlit
-radon
-python-dotenv
+
 
