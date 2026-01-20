@@ -1,142 +1,149 @@
-
-from src.analyzer import analyze_code
-from src.ai_engine import get_ai_review
-# from st_diff_viewer import diff_viewer
 import streamlit as st
+from code_parser import CodeParser
+from error_detector import ErrorDetector
+from ai_suggestor import AISuggestor
 
 st.set_page_config(
-    page_title="Ai Driven Code Reviewer",
-    page_icon="🔎",
+    page_title="AI Code Reviewer",
+    page_icon="🔍",
     layout="wide"
 )
 
-# --- CLEAN CSS (Normal Sidebar, Custom IDE Editor) ---
-st.markdown("""
-    <style>
-    /* Main Background */
-    .main {
-        background-color: #ffffff;
-    }
+st.title("🔍 AI Code Reviewer")
+st.markdown("Upload your Python code for comprehensive analysis and AI-powered suggestions")
+
+# Initialize components
+parser = CodeParser()
+detector = ErrorDetector()
+suggestor = AISuggestor()
+
+# Sidebar
+with st.sidebar:
+    st.header("⚙️ Settings")
+    analysis_depth = st.selectbox(
+        "Analysis Depth",
+        ["Quick", "Standard", "Deep"],
+        index=1
+    )
     
-    /* Code Editor Styling (Dark IDE look) */
-    .stTextArea textarea {
-        font-family: 'Source Code Pro', monospace;
-        background-color: #1e1e1e !important;
-        color: #d4d4d4 !important;
-        border-radius: 8px;
-    }
+    st.markdown("---")
+    st.markdown("### About")
+    st.info("This tool analyzes Python code for:\n- Syntax errors\n- Unused variables/imports\n- Code quality issues\n- AI-powered improvements")
 
-    /* Button Styling */
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        background-color: #ff4b4b;
-        color: white;
-        font-weight: bold;
-        transition: 0.3s;
-        border: none;
-    }
-    .stButton>button:hover {
-        background-color: #ff3333;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Main content
+tab1, tab2, tab3 = st.tabs(["📝 Code Input", "📊 Analysis Results", "💡 AI Suggestions"])
 
-# --- SESSION STATE INITIALIZATION ---
-if "ai_feedback" not in st.session_state:
-    st.session_state.ai_feedback = None
-
-# --- UI Header ---
-st.title("📔 Ai Code Reviewer")
-st.subheader("Paste your code below to get a Review")
-
-# --- Code Editor ---
-code_input = st.text_area(
-    label="Code Editor",
-    placeholder="Paste your code here...",
-    height=250,
-    label_visibility="collapsed"
-)
-
-# --- Normal Sidebar ---
-# Removed the custom CSS for sidebar, so it uses default Streamlit styling
-language = st.sidebar.selectbox("Select Language", ["Python", "Java", "C++", "JavaScript"])
-st.sidebar.divider()
-st.sidebar.info("Select your language and hit Analyze to start the audit.")
-
-# --- Action Button ---
-# if st.button("Analyze Code"):
-#     if code_input.strip():
-#         # Static Analysis for Python
-#         if language == "Python":
-#             report = analyze_code(code_input)
-#             if not report["syntax_ok"]:
-#                 st.error(f"⚠️ Python Syntax Error: {report['error']}")
-                
-           
-        
-#         # AI Analysis
-#         with st.spinner(f"🤖 Analysing Your {language} code..."):
-#             # st.session_state.ai_feedback = get_ai_review(code_input) 
-#             st.write_stream(get_ai_review(code_input))
-#     else:
-#         st.warning("Please enter some code first.")
-if st.button("Analyze Code"):
-    st.toast("Button Clicked!") # Debug 1
-    if code_input.strip():
-        st.toast("Starting AI Engine...") # Debug 2
-        with st.spinner("🤖 Analysing..."):
-            try:
-                result = get_ai_review(code_input)
-                st.session_state.ai_feedback = result
-                st.toast("AI Response Received!") # Debug 3
-            except Exception as e:
-                st.error(f"AI Engine Error: {e}")
-                st.toast("AI Engine Failed!")
-    else:
-        st.warning("Please enter code.")
-
-# --- DISPLAY RESULTS ---
-if st.session_state.ai_feedback:
-    feedback = st.session_state.ai_feedback
+with tab1:
+    st.subheader("Enter or Upload Python Code")
     
-    if "[ERRORS]" in feedback and "[SUGGESTIONS]" in feedback:
-        try:
-            # Parsing the logic
-            parts = feedback.split("[ERRORS]")[1].split("[SUGGESTIONS]")
-            error_content = parts[0]
-            
-            parts = parts[1].split("[COMPLEXITY]")
-            suggestion_content = parts[0]
-            
-            parts = parts[1].split("[FIXED_CODE]")
-            complexity_content = parts[0]
-            fixed_code = parts[1].strip().replace("```python", "").replace("```", "").replace("```javascript", "").replace("```java", "").replace("```cpp", "")
-            
-            # Create Tabs
-            tab1, tab2, tab3, tab4 = st.tabs(["🚨 ERROR LOG", "💡 SUGGESTIONS", "📊 COMPLEXITY", "🛠️ AUTO-FIX"])
-
-            with tab1:
-                st.markdown("### Detected Issues")
-                st.markdown(error_content)
-
-            with tab2:
-                st.markdown("### Improvement Suggestions")
-                st.markdown(suggestion_content)
-
-            with tab3:
-                st.markdown("### Algorithm Analysis")
-                st.markdown(complexity_content)
-                
-            # with tab4:
-            #     st.subheader("Comparison: Original vs. Fixed")
-            #     diff_viewer(code_input, fixed_code, lang=language.lower(), key="main_diff_viewer")
-        
-        except Exception as e:
-            st.error("Error parsing AI response. Showing raw feedback below.")
-            st.markdown(feedback)
+    upload_option = st.radio("Input Method:", ["Type Code", "Upload File"])
+    
+    code_input = ""
+    
+    if upload_option == "Type Code":
+        code_input = st.text_area(
+            "Python Code:",
+            height=400,
+            placeholder="# Enter your Python code here...\n\ndef example():\n    x = 10\n    return x"
+        )
     else:
-        st.markdown(feedback)
-        
+        uploaded_file = st.file_uploader("Choose a Python file", type=['py'])
+        if uploaded_file is not None:
+            code_input = uploaded_file.read().decode("utf-8")
+            st.code(code_input, language='python')
+    
+    analyze_button = st.button("🔍 Analyze Code", type="primary", use_container_width=True)
 
+with tab2:
+    st.subheader("Code Analysis Results")
+    
+    if analyze_button and code_input.strip():
+        with st.spinner("Analyzing code..."):
+            # Parse code
+            parse_result = parser.parse_code(code_input)
+            
+            if parse_result['success']:
+                st.success("✅ Code parsed successfully!")
+                
+                # Detect errors
+                errors = detector.detect_errors(code_input, parse_result['ast'])
+                
+                # Display metrics
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("Total Issues", len(errors['unused_vars']) + len(errors['unused_imports']))
+                
+                with col2:
+                    st.metric("Unused Variables", len(errors['unused_vars']))
+                
+                with col3:
+                    st.metric("Unused Imports", len(errors['unused_imports']))
+                
+                # Display detailed errors
+                if errors['unused_imports']:
+                    st.warning("⚠️ Unused Imports Detected")
+                    for imp in errors['unused_imports']:
+                        st.code(f"Line {imp['line']}: {imp['name']}", language='python')
+                
+                if errors['unused_vars']:
+                    st.warning("⚠️ Unused Variables Detected")
+                    for var in errors['unused_vars']:
+                        st.code(f"Line {var['line']}: {var['name']}", language='python')
+                
+                if not errors['unused_imports'] and not errors['unused_vars']:
+                    st.success("🎉 No unused imports or variables found!")
+                
+                # Store in session state for AI suggestions
+                st.session_state['code_input'] = code_input
+                st.session_state['errors'] = errors
+                st.session_state['parse_result'] = parse_result
+                
+            else:
+                st.error(f"❌ Parsing Error: {parse_result['error']}")
+    
+    elif analyze_button:
+        st.warning("⚠️ Please enter some code to analyze")
+
+with tab3:
+    st.subheader("AI-Powered Suggestions")
+    
+    if 'code_input' in st.session_state and 'errors' in st.session_state:
+        
+        get_suggestions_button = st.button("💡 Get AI Suggestions", type="primary")
+        
+        if get_suggestions_button:
+            with st.spinner("Generating AI suggestions..."):
+                suggestions = suggestor.get_suggestions(
+                    st.session_state['code_input'],
+                    st.session_state['errors']
+                )
+                
+                st.markdown("### 🤖 AI Analysis")
+                st.markdown(suggestions['analysis'])
+                
+                if suggestions['improvements']:
+                    st.markdown("### ✨ Suggested Improvements")
+                    for i, improvement in enumerate(suggestions['improvements'], 1):
+                        with st.expander(f"Improvement {i}: {improvement['title']}"):
+                            st.markdown(improvement['description'])
+                            if 'code' in improvement:
+                                st.code(improvement['code'], language='python')
+                
+                if suggestions['refactored_code']:
+                    st.markdown("### 🔄 Refactored Code")
+                    st.code(suggestions['refactored_code'], language='python')
+                    
+                    # Download button
+                    st.download_button(
+                        label="📥 Download Refactored Code",
+                        data=suggestions['refactored_code'],
+                        file_name="refactored_code.py",
+                        mime="text/plain"
+                    )
+    else:
+        st.info("👈 Please analyze code first in the 'Analysis Results' tab")
+
+# Footer
+st.markdown("---")
+st.markdown("Built with ❤️ using Streamlit and Claude AI")
