@@ -16,8 +16,8 @@ def get_ai_review(code_content):
     """
     try:
         # Initialize the specific model
-        model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
+        
+        model = genai.GenerativeModel("gemini-2.0-flash"
             # Inside get_ai_review function
            # Inside get_ai_review function in src/ai_engine.py
 system_instruction=(
