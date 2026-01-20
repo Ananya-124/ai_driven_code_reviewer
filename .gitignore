@@ -6,3 +6,6 @@ venv/
 # Ignore Python cache files
 __pycache__/
 *.py[cod]
+
+#ignore secret keys
+.env
