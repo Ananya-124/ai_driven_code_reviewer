@@ -73,7 +73,7 @@ if st.button("Analyze Code"):
             report = analyze_code(code_input)
             if not report["syntax_ok"]:
                 st.error(f"⚠️ Python Syntax Error: {report['error']}")
-                st.stop()
+                
            
         
         # AI Analysis
