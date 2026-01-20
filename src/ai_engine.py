@@ -4,7 +4,8 @@ from dotenv import load_dotenv
 
 # 1. Load the secret API key from your .env file
 load_dotenv()
-api_key = os.getenv("GOOGLE_API_KEY")
+# api_key = os.getenv("GOOGLE_API_KEY")
+api_key = os.getenv("GOOGLE_API_KEY") or st.secrets.get("GOOGLE_API_KEY")
 
 # 2. Configure the library
 genai.configure(api_key=api_key)
