@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Ignore the virtual environment
 aivenv/
 venv/
@@ -10,13 +9,3 @@ __pycache__/
 
 #ignore secret keys
 .env
-=======
-# Ignore the virtual environment
-aivenv/
-venv/
-.venv/
-
-# Ignore Python cache files
-__pycache__/
-*.py[cod]
->>>>>>> 064a14efc2085faadbe2dcbbc05c17d35e30c245
