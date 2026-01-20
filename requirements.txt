@@ -2,7 +2,7 @@
 streamlit
 radon
 python-dotenv
-google-generativeai>=0.8.0
+google-generativeai
 langchain-google-genai
 huggingface-hub
 langchain-huggingface
