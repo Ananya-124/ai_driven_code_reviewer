@@ -1,14 +1,14 @@
 <<<<<<< HEAD
-# streamlit
-# radon
-# python-dotenv
+streamlit
+radon
+python-dotenv
 google-generativeai
 langchain-google-genai
 huggingface-hub
 langchain-huggingface
 langchain-community
 langchain-core
-# langchain
+langchain
 =======
 streamlit
 radon
